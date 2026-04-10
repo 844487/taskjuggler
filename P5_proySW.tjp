@@ -160,13 +160,13 @@ task WMGame "Web & Mobile Game" {
     depends WMGame.tback.tBEd
     task tGUId "Mobile GUI Design" {
       effort 9d
-      actual:effort 16d
+      actual:effort 19d
       allocate dev3, dev4
     }
     task tFEc "Mobile Front End Construction" {
       effort 18d
       allocate dev3, dev4
-      depends WMGame.twebF.tGUId
+      depends WMGame.tmobF.tGUId
       journalentry 2026-04-10 "Layout alignment issues on small screens" {
         author dev4
         alert yellow
@@ -190,7 +190,7 @@ task WMGame "Web & Mobile Game" {
       allocate dev1, dev2
     }
     task tNetwork "Network and Subnet Configuration" {
-      effort 2d
+      effort 4d
       allocate dev1
       depends WMGame.tcloudDep.tEvalCloud
     }
@@ -199,15 +199,16 @@ task WMGame "Web & Mobile Game" {
       allocate dev1
       depends WMGame.tcloudDep.tNetwork
     }
-    task tWebServer "Web Server Deployment" {
-      effort 4d
-      allocate dev1, dev2
-      depends WMGame.tcloudDep.tWAF
-    }
     task tDatabase "Database Setup" {
-      effort 3d 
+      effort 6d 
       allocate dev1
       depends WMGame.tcloudDep.tNetwork
+    }
+    task tWebServer "Web Server Deployment" {
+      effort 15d
+      allocate dev1, dev2
+      depends WMGame.tcloudDep.tWAF
+      depends WMGame.tcloudDep.tDatabase
     }
   }
 
