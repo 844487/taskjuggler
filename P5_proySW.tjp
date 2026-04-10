@@ -19,7 +19,7 @@ project pSix "Web Game"  2025-12-15 +5m {
   # the project reports. If not specified, the current day will be
   # used, but this will likely be outside of the project range, so it
   # can't be seen in the reports.
-  now 2026-02-25-13:00
+  now 2026-04-10-15:00
   # The currency for all money values is the US Dollar.
   currency "EUR"
 
@@ -67,6 +67,12 @@ resource dev2 "Samantha Müller" {
 }
 resource dev3 "Peter Green" {
   email "kkk@unizar.es"
+}
+resource dev4 "Miguel Royo" {
+  email "844487@unizar.es"
+  workinghours mon - sun 9:00 - 12:00, 13:00 - 14:00
+  # I assume I do not have to work on weekends
+  workinghours sat, sun off
 }
 
 # Now we specify the work packages. The whole project is described as
@@ -128,7 +134,7 @@ task WMGame "Web & Mobile Game" {
     task tGUId "Web GUI Design" {
       effort 9d
       actual:effort 15d
-      allocate dev3
+      allocate dev3, dev4
       journalentry 2026-01-15 "Problems with the GUI design tool" {
         author dev3
         alert yellow
@@ -147,14 +153,75 @@ task WMGame "Web & Mobile Game" {
     }    
   }
 
+  task tmobF "Mobile Front End" {
+    purge chargeset
+    chargeset mFront
+    responsible dev4
+    depends WMGame.tback.tBEd
+    task tGUId "Mobile GUI Design" {
+      effort 9d
+      actual:effort 16d
+      allocate dev3, dev4
+    }
+    task tFEc "Mobile Front End Construction" {
+      effort 18d
+      allocate dev3, dev4
+      depends WMGame.twebF.tGUId
+      journalentry 2026-04-10 "Layout alignment issues on small screens" {
+        author dev4
+        alert yellow
+        summary "The UI looks broken on smaller phones. We need to adjust the styles for responsiveness, which is taking longer than planned."
+      }
+    }
+    task tFEt "Mobile Front End Test" {
+      effort 7d
+      allocate dev4
+      depends WMGame.tmobF.tFEc
+    }    
+  }
+
+  task tcloudDep "Cloud Backend Deployment" {
+    purge chargeset
+    chargeset back
+    responsible dev1
+    depends WMGame.tback.tbackDev
+    task tEvalCloud "Cloud Evaluation and Decision" {
+      effort 3d
+      allocate dev1, dev2
+    }
+    task tNetwork "Network and Subnet Configuration" {
+      effort 2d
+      allocate dev1
+      depends WMGame.tcloudDep.tEvalCloud
+    }
+    task tWAF "WAF Implementation" {
+      effort 3d
+      allocate dev1
+      depends WMGame.tcloudDep.tNetwork
+    }
+    task tWebServer "Web Server Deployment" {
+      effort 4d
+      allocate dev1, dev2
+      depends WMGame.tcloudDep.tWAF
+    }
+    task tDatabase "Database Setup" {
+      effort 3d 
+      allocate dev1
+      depends WMGame.tcloudDep.tNetwork
+    }
+  }
+
   task ttest "Acceptance tests" {
       effort 10d
       allocate boss
       allocate dev2
       actual:effort 20d
       depends WMGame.twebF
+      depends WMGame.tmobF
       depends WMGame.tback
-      }
+      depends WMGame.tcloudDep
+      minstart 2026-05-15
+  }
 
     
   task deliveries "Milestones" {
@@ -251,6 +318,11 @@ textreport frame "" {
     formats html
     title "Resource Graph"
     center '<[report id="resourceGraph"]>'
+  }
+  textreport "Initial Plan" {
+    formats html
+    title "Initial Plan"
+    center '<[report id="initialPlan"]>'
   }
 }
 
@@ -351,4 +423,15 @@ resourcereport resourceGraph "" {
   # We only like to show leaf tasks for leaf resources.
   hidetask ~(isleaf() & isleaf_())
   sorttasks plan.start.up
+}
+
+taskreport initialPlan "" {  
+  scenarios plan
+  headline "Initial Project Plan"
+  columns bsi { title 'WBS' },
+          name, start, end, effort, resources, chart { ${TaskTip} }
+  # For this report we like to have the abbreviated weekday in front
+  # of the date. %a is the tag for this.
+  timeformat "%a %Y-%m-%d"
+  loadunit days
 }
